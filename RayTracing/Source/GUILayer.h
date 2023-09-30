@@ -3,9 +3,9 @@
 
 #include <Base.h>
 
-namespace Base
+namespace RayTracing
 {
-    class GUILayer : public Layer
+    class GUILayer : public Base::Layer
     {
     public:
         GUILayer();
@@ -13,10 +13,10 @@ namespace Base
 
         void OnAttach() override;
         void OnDetach() override;
-        void OnUpdate(float ts) override;
 
+        void OnUpdate(float ts) override;
         void OnImGuiRender() override;
     };
-} // namespace Base
+} // namespace RayTracing
 
 #endif // RAYTRACING_GUILAYER_H

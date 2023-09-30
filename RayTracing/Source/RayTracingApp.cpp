@@ -3,23 +3,22 @@
 
 #include "GUILayer.h"
 
-namespace Base
+namespace RayTracing
 {
-    class RayTracingApp : public Application
+    class RayTracingApp : public Base::Application
     {
     public:
-        RayTracingApp(const ApplicationSpecification& spec) : Application(spec) { PushLayer(new GUILayer()); }
-
+        RayTracingApp(const Base::ApplicationSpecification& spec) : Application(spec) { PushLayer(new GUILayer()); }
         ~RayTracingApp() override = default;
 
     private:
     };
+} // namespace RayTracing
 
-    Application* CreateApplication(int argc, char** argv)
-    {
-        ApplicationSpecification spec;
-        spec.Name = "RayTracing";
+Base::Application* Base::CreateApplication(int argc, char** argv)
+{
+    Base::ApplicationSpecification spec;
+    spec.Name = "RayTracing";
 
-        return new RayTracingApp(spec);
-    }
-} // namespace Base
+    return new RayTracing::RayTracingApp(spec);
+}
