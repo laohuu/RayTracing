@@ -4,8 +4,8 @@
 #include "Core/Layer.h"
 #include <imgui.h>
 
-#include "backends/imgui_impl_vulkan.h"
-#include "vulkan/vulkan.h"
+#include <backends/imgui_impl_vulkan.h>
+#include <vulkan/vulkan.h>
 
 void check_vk_result(VkResult err);
 
@@ -34,11 +34,7 @@ namespace Base
         static VkDevice                 GetDevice();
         static VkAllocationCallbacks*   GetAllocator();
         static ImGui_ImplVulkanH_Window GetMainWindowData();
-        static VkQueue GetQueue();
-
-        static VkCommandBuffer GetCommandBuffer(bool begin);
-        static void            FlushCommandBuffer(VkCommandBuffer commandBuffer);
-        static void            SubmitResourceFree(std::function<void()>&& func);
+        static VkQueue                  GetQueue();
 
     private:
         bool m_BlockEvents = true;

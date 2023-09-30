@@ -10,8 +10,6 @@ namespace RayTracing
     public:
         RayTracingApp(const Base::ApplicationSpecification& spec) : Application(spec) { PushLayer(new GUILayer()); }
         ~RayTracingApp() override = default;
-
-    private:
     };
 } // namespace RayTracing
 
