@@ -19,8 +19,14 @@ namespace RayTracing
         void OnUpdate(float ts) override;
         void OnImGuiRender() override;
 
+        void Render();
+
     private:
         std::shared_ptr<Base::Image> m_Image;
+        uint32_t*                    m_ImageData      = nullptr;
+        float                        m_LastRenderTime = 0.0f;
+
+        uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
     };
 } // namespace RayTracing
 

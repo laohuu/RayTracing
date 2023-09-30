@@ -111,6 +111,4 @@ namespace Base
 
         m_MainThreadQueue.clear();
     }
-
-
 } // namespace Base

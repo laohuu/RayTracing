@@ -1,7 +1,7 @@
+#include "GUILayer.h"
+
 #include <Base.h>
 #include <Core/EntryPoint.h>
-
-#include "GUILayer.h"
 
 namespace RayTracing
 {

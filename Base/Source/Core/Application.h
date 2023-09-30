@@ -14,8 +14,8 @@ namespace Base
     struct ApplicationSpecification
     {
         std::string Name   = "Base Application";
-        uint32_t    Width  = 1600;
-        uint32_t    Height = 900;
+        uint32_t    Width  = 1280;
+        uint32_t    Height = 720;
     };
 
     class Application
@@ -40,6 +40,7 @@ namespace Base
         const ApplicationSpecification& GetSpecification() const { return m_Specification; }
 
         void SubmitToMainThread(const std::function<void()>& function);
+
     private:
         void Run();
 
