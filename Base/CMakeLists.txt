@@ -23,6 +23,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC Source)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE stb)
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm)
 target_link_libraries(${PROJECT_NAME} PUBLIC imgui)
 
 find_package(Vulkan REQUIRED)

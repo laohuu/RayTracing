@@ -2,6 +2,11 @@ set(THIRD_PARTY_FOLD "Plugins")
 
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
+if (NOT TARGET glm)
+    add_subdirectory(glm)
+    set_target_properties(glm PROPERTIES FOLDER ${THIRD_PARTY_FOLD}/glm)
+endif ()
+
 if (NOT TARGET imgui)
     include(imgui.cmake)
     set_target_properties(imgui PROPERTIES FOLDER ${THIRD_PARTY_FOLD}/imgui)
