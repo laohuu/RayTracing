@@ -11,3 +11,10 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Base)
 
+set(POST_BUILD_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/Assets"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/Assets" "${CMAKE_CURRENT_BINARY_DIR}/Assets"
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} ${POST_BUILD_COMMANDS})
+

@@ -4,6 +4,11 @@
 #include "Core/Layer.h"
 #include <imgui.h>
 
+#include "backends/imgui_impl_vulkan.h"
+#include "vulkan/vulkan.h"
+
+void check_vk_result(VkResult err);
+
 namespace Base
 {
     class ImGuiLayer : public Layer
@@ -23,6 +28,17 @@ namespace Base
         void SetDarkThemeColors();
 
         static uint32_t GetActiveWidgetID();
+
+        static VkInstance               GetInstance();
+        static VkPhysicalDevice         GetPhysicalDevice();
+        static VkDevice                 GetDevice();
+        static VkAllocationCallbacks*   GetAllocator();
+        static ImGui_ImplVulkanH_Window GetMainWindowData();
+        static VkQueue GetQueue();
+
+        static VkCommandBuffer GetCommandBuffer(bool begin);
+        static void            FlushCommandBuffer(VkCommandBuffer commandBuffer);
+        static void            SubmitResourceFree(std::function<void()>&& func);
 
     private:
         bool m_BlockEvents = true;

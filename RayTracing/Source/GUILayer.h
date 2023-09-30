@@ -3,6 +3,8 @@
 
 #include <Base.h>
 
+#include "Core/Image.h"
+
 namespace RayTracing
 {
     class GUILayer : public Base::Layer
@@ -16,6 +18,9 @@ namespace RayTracing
 
         void OnUpdate(float ts) override;
         void OnImGuiRender() override;
+
+    private:
+        std::shared_ptr<Base::Image> m_Image;
     };
 } // namespace RayTracing
 

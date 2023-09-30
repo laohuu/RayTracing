@@ -40,7 +40,12 @@ static ImGui_ImplVulkanH_Window g_MainWindowData;
 static int                      g_MinImageCount    = 2;
 static bool                     g_SwapChainRebuild = false;
 
-static void check_vk_result(VkResult err)
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+void check_vk_result(VkResult err)
 {
     if (err == 0)
         return;
@@ -48,6 +53,27 @@ static void check_vk_result(VkResult err)
     if (err < 0)
         abort();
 }
+
+#ifdef IMGUI_VULKAN_DEBUG_REPORT
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT      flags,
+                                                   VkDebugReportObjectTypeEXT objectType,
+                                                   uint64_t                   object,
+                                                   size_t                     location,
+                                                   int32_t                    messageCode,
+                                                   const char*                pLayerPrefix,
+                                                   const char*                pMessage,
+                                                   void*                      pUserData)
+{
+    (void)flags;
+    (void)object;
+    (void)location;
+    (void)messageCode;
+    (void)pUserData;
+    (void)pLayerPrefix; // Unused arguments
+    fprintf(stderr, "[vulkan] Debug report from ObjectType: %i\nMessage: %s\n\n", objectType, pMessage);
+    return VK_FALSE;
+}
+#endif // IMGUI_VULKAN_DEBUG_REPORT
 
 static bool IsExtensionAvailable(const ImVector<VkExtensionProperties>& properties, const char* extension)
 {
@@ -200,15 +226,23 @@ static void SetupVulkan(ImVector<const char*> instance_extensions)
     // The example only requires a single combined image sampler descriptor for the font image and only uses one
     // descriptor set (for that) If you wish to load e.g. additional textures you may need to alter pools sizes.
     {
-        VkDescriptorPoolSize pool_sizes[] = {
-            {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
-        };
-        VkDescriptorPoolCreateInfo pool_info = {};
-        pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_info.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pool_info.maxSets                    = 1;
-        pool_info.poolSizeCount              = (uint32_t)IM_ARRAYSIZE(pool_sizes);
-        pool_info.pPoolSizes                 = pool_sizes;
+        VkDescriptorPoolSize       pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+                                                   {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+        VkDescriptorPoolCreateInfo pool_info    = {};
+        pool_info.sType                         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags                         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets                       = 1000 * IM_ARRAYSIZE(pool_sizes);
+        pool_info.poolSizeCount                 = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+        pool_info.pPoolSizes                    = pool_sizes;
         err = vkCreateDescriptorPool(g_Device, &pool_info, g_Allocator, &g_DescriptorPool);
         check_vk_result(err);
     }
@@ -367,27 +401,12 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd)
     wd->SemaphoreIndex = (wd->SemaphoreIndex + 1) % wd->ImageCount; // Now we can use the next set of semaphores
 }
 
-extern "C"
-{
-    extern GLFWAPI VkResult glfwCreateWindowSurface(VkInstance                   instance,
-                                                    GLFWwindow*                  window,
-                                                    const VkAllocationCallbacks* allocator,
-                                                    VkSurfaceKHR*                surface);
-}
-
 namespace Base
 {
     ImGuiLayer::ImGuiLayer() : Layer("ImGuiLayer") {}
 
     void ImGuiLayer::OnAttach()
     {
-        // Setup Vulkan
-        if (!glfwVulkanSupported())
-        {
-            std::cerr << "GLFW: Vulkan not supported!\n";
-            return;
-        }
-
         ImVector<const char*> extensions;
         uint32_t              extensions_count = 0;
         const char**          glfw_extensions  = glfwGetRequiredInstanceExtensions(&extensions_count);
@@ -395,7 +414,7 @@ namespace Base
             extensions.push_back(glfw_extensions[i]);
         SetupVulkan(extensions);
 
-        GLFWwindow* window = Application::Get().GetWindow();
+        auto window = Application::Get().GetWindow();
 
         // Create Window Surface
         VkSurfaceKHR surface;
@@ -509,6 +528,7 @@ namespace Base
         // Cleanup
         VkResult err = vkDeviceWaitIdle(g_Device);
         check_vk_result(err);
+
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -621,4 +641,75 @@ namespace Base
     }
 
     uint32_t ImGuiLayer::GetActiveWidgetID() { return GImGui->ActiveId; }
+
+    VkInstance ImGuiLayer::GetInstance() { return g_Instance; }
+
+    VkPhysicalDevice ImGuiLayer::GetPhysicalDevice() { return g_PhysicalDevice; }
+
+    VkDevice ImGuiLayer::GetDevice() { return g_Device; }
+
+    VkAllocationCallbacks* ImGuiLayer::GetAllocator() { return g_Allocator; }
+
+    ImGui_ImplVulkanH_Window ImGuiLayer::GetMainWindowData() { return g_MainWindowData; }
+
+    VkQueue ImGuiLayer::GetQueue() { return g_Queue; }
+
+    VkCommandBuffer ImGuiLayer::GetCommandBuffer(bool begin)
+    {
+        ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
+
+        // Use any command queue
+        VkCommandPool command_pool = wd->Frames[wd->FrameIndex].CommandPool;
+
+        VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
+        cmdBufAllocateInfo.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        cmdBufAllocateInfo.commandPool                 = command_pool;
+        cmdBufAllocateInfo.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        cmdBufAllocateInfo.commandBufferCount          = 1;
+
+        //        VkCommandBuffer& command_buffer = s_AllocatedCommandBuffers[wd->FrameIndex].emplace_back();
+        //        auto             err            = vkAllocateCommandBuffers(g_Device, &cmdBufAllocateInfo,
+        //        &command_buffer);
+        //
+        //        VkCommandBufferBeginInfo begin_info = {};
+        //        begin_info.sType                    = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        //        begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        //        err = vkBeginCommandBuffer(command_buffer, &begin_info);
+        //        check_vk_result(err);
+
+        return NULL;
+    }
+
+    void ImGuiLayer::FlushCommandBuffer(VkCommandBuffer commandBuffer)
+    {
+        const uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000;
+
+        VkSubmitInfo end_info       = {};
+        end_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        end_info.commandBufferCount = 1;
+        end_info.pCommandBuffers    = &commandBuffer;
+        auto err                    = vkEndCommandBuffer(commandBuffer);
+        check_vk_result(err);
+
+        // Create fence to ensure that the command buffer has finished executing
+        VkFenceCreateInfo fenceCreateInfo = {};
+        fenceCreateInfo.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceCreateInfo.flags             = 0;
+        VkFence fence;
+        err = vkCreateFence(g_Device, &fenceCreateInfo, nullptr, &fence);
+        check_vk_result(err);
+
+        err = vkQueueSubmit(g_Queue, 1, &end_info, fence);
+        check_vk_result(err);
+
+        err = vkWaitForFences(g_Device, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT);
+        check_vk_result(err);
+
+        vkDestroyFence(g_Device, fence, nullptr);
+    }
+
+    void ImGuiLayer::SubmitResourceFree(std::function<void()>&& func)
+    {
+        //        s_ResourceFreeQueue[s_CurrentFrameIndex].emplace_back(func);
+    }
 } // namespace Base
