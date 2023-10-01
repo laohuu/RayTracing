@@ -1,7 +1,9 @@
 #ifndef RAYTRACING_RENDERER_H
 #define RAYTRACING_RENDERER_H
 
+#include "Camera.h"
 #include "Core/Image.h"
+#include "Ray.h"
 
 #include <glm/glm.hpp>
 #include <memory>
@@ -13,12 +15,12 @@ namespace RayTracing
     public:
         Renderer() = default;
         void OnResize(uint32_t width, uint32_t height);
-        void Render();
+        void Render(const Camera& camera);
 
         std::shared_ptr<Base::Image> GetFinalImage() const { return m_FinalImage; }
 
     private:
-        glm::vec4 PerPixel(glm::vec2 coord);
+        glm::vec4 TraceRay(const Ray& ray);
 
     private:
         std::shared_ptr<Base::Image> m_FinalImage;

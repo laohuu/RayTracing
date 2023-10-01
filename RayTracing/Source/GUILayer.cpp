@@ -8,13 +8,13 @@ using namespace Base;
 
 namespace RayTracing
 {
-    GUILayer::GUILayer() : Layer("GUILayer") {}
+    GUILayer::GUILayer() : Layer("GUILayer"), m_Camera(45.0f, 0.1f, 100.0f) {}
 
     void GUILayer::OnAttach() {}
 
     void GUILayer::OnDetach() {}
 
-    void GUILayer::OnUpdate(float ts) {}
+    void GUILayer::OnUpdate(float ts) { m_Camera.OnUpdate(ts); }
 
     void GUILayer::OnImGuiRender()
     {
@@ -52,9 +52,9 @@ namespace RayTracing
 
         // Render
         m_Renderer.OnResize(m_ViewportWidth, m_ViewportHeight);
-        m_Renderer.Render();
+        m_Camera.OnResize(m_ViewportWidth, m_ViewportHeight);
+        m_Renderer.Render(m_Camera);
 
         m_LastRenderTime = timer.ElapsedMillis();
     }
-
 } // namespace RayTracing
