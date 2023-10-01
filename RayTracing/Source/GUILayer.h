@@ -16,9 +16,6 @@ namespace RayTracing
         GUILayer();
         ~GUILayer() override = default;
 
-        void OnAttach() override;
-        void OnDetach() override;
-
         void OnUpdate(float ts) override;
         void OnImGuiRender() override;
 
@@ -27,6 +24,7 @@ namespace RayTracing
     private:
         Renderer m_Renderer;
         Camera   m_Camera;
+        Scene    m_Scene;
 
         float m_LastRenderTime = 0.0f;
 

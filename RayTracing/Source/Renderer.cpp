@@ -35,8 +35,11 @@ namespace RayTracing
         m_ImageData = new uint32_t[width * height];
     }
 
-    void Renderer::Render(const Camera& camera)
+    void Renderer::Render(const Scene& scene, const Camera& camera)
     {
+        m_ActiveScene  = &scene;
+        m_ActiveCamera = &camera;
+
         for (uint32_t y = 0; y < m_FinalImage->GetHeight(); y++)
         {
             for (uint32_t x = 0; x < m_FinalImage->GetWidth(); x++)
@@ -53,7 +56,6 @@ namespace RayTracing
 
     glm::vec4 Renderer::TraceRay(const Ray& ray)
     {
-        float radius = 0.5f;
         // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
         // where
         // a = ray origin
@@ -61,34 +63,55 @@ namespace RayTracing
         // r = radius
         // t = hit distance
 
+        int   closestSphere = -1;
+        float hitDistance   = std::numeric_limits<float>::max();
+
         glm::vec3 rayOrigin    = ray.GetOrigin();
         glm::vec3 rayDirection = ray.GetDirection();
 
-        float a = glm::dot(rayDirection, rayDirection);
-        float b = 2.0f * glm::dot(rayOrigin, rayDirection);
-        float c = glm::dot(rayOrigin, rayOrigin) - radius * radius;
+        for (size_t i = 0; i < m_ActiveScene->Spheres.size(); i++)
+        {
+            const Sphere& sphere = m_ActiveScene->Spheres[i];
+            glm::vec3     origin = rayOrigin - sphere.Position;
 
-        // Quadratic forumula discriminant:
-        // b^2 - 4ac
+            float a = glm::dot(rayDirection, rayDirection);
+            float b = 2.0f * glm::dot(origin, rayDirection);
 
-        float discriminant = b * b - 4.0f * a * c;
-        if (discriminant < 0.0f)
-            return {0, 0, 0, 1};
+                 // Quadratic forumula discriminant:
+                 // b^2 - 4ac
+            float c = glm::dot(origin, origin) - sphere.Radius * sphere.Radius;
 
-        // Quadratic formula:
-        // (-b +- sqrt(discriminant)) / 2a
+            float discriminant = b * b - 4.0f * a * c;
+            if (discriminant < 0.0f)
+                continue;
 
-        float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
-        float t0       = (-b + glm::sqrt(discriminant)) / (2.0f * a); // Second hit distance (currently unused)
+            // Quadratic formula:
+            // (-b +- sqrt(discriminant)) / 2a
 
-        glm::vec3 hitPoint = ray.At(closestT);
+            // float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a); // Second hit distance (currently unused)
+            float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
+            if (closestT > 0.0f && closestT < hitDistance)
+            {
+                hitDistance   = closestT;
+                closestSphere = (int)i;
+            }
+        }
+
+        if (closestSphere < 0)
+            return {0.0f, 0.0f, 0.0f, 1.0f};
+
+        const Sphere& sphere = m_ActiveScene->Spheres[closestSphere];
+        glm::vec3     origin = rayOrigin - sphere.Position;
+
+        glm::vec3 hitPoint = origin + rayDirection * hitDistance;
         glm::vec3 normal   = glm::normalize(hitPoint);
 
         glm::vec3 lightDir       = glm::normalize(glm::vec3(-1, -1, -1));
         float     lightIntensity = glm::max(glm::dot(normal, -lightDir), 0.0f); // == cos(angle)
 
-        glm::vec3 sphereColor(1, 0, 1);
+        glm::vec3 sphereColor = m_ActiveScene->Materials[sphere.MaterialIndex].Albedo;
         sphereColor *= lightIntensity;
+
         return {sphereColor, 1.0f};
     }
 } // namespace RayTracing
