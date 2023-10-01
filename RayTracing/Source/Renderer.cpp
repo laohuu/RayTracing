@@ -62,7 +62,7 @@ namespace RayTracing
         glm::vec3 light(0.0f);
         glm::vec3 contribution(1.0f);
 
-        int bounces = 2;
+        int bounces = 5;
         for (int i = 0; i < bounces; i++)
         {
             Ray                  ray(rayOrigin, rayDirection);
@@ -81,10 +81,11 @@ namespace RayTracing
             float     lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f); // == cos(angle)
 
             light += material.Albedo * contribution * lightIntensity;
-            contribution *= 0.7f;
+            contribution *= 0.5f;
 
-            rayOrigin    = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-            rayDirection = glm::reflect(rayDirection, payload.WorldNormal);
+            rayOrigin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
+            rayDirection =
+                glm::reflect(rayDirection, payload.WorldNormal + material.Roughness * Base::Random::Vec3(-0.5f, 0.5f));
         }
 
         return {light, 1.0f};
