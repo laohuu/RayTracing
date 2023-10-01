@@ -5,6 +5,8 @@
 
 #include "Core/Image.h"
 
+#include "Renderer.h"
+
 namespace RayTracing
 {
     class GUILayer : public Base::Layer
@@ -22,9 +24,8 @@ namespace RayTracing
         void Render();
 
     private:
-        std::shared_ptr<Base::Image> m_Image;
-        uint32_t*                    m_ImageData      = nullptr;
-        float                        m_LastRenderTime = 0.0f;
+        Renderer m_Renderer;
+        float    m_LastRenderTime = 0.0f;
 
         uint32_t m_ViewportWidth = 0, m_ViewportHeight = 0;
     };
