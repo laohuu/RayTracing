@@ -21,7 +21,20 @@ namespace RayTracing
         std::shared_ptr<Base::Image> GetFinalImage() const { return m_FinalImage; }
 
     private:
-        glm::vec4 TraceRay(const Ray& ray);
+        struct HitPayload
+        {
+            float     HitDistance;
+            glm::vec3 WorldPosition;
+            glm::vec3 WorldNormal;
+
+            int ObjectIndex;
+        };
+
+        glm::vec4 PerPixel(uint32_t x, uint32_t y); // RayGen
+
+        HitPayload TraceRay(const Ray& ray);
+        HitPayload ClosestHit(const Ray& ray, float hitDistance, int objectIndex);
+        HitPayload Miss(const Ray& ray);
 
     private:
         std::shared_ptr<Base::Image> m_FinalImage;
