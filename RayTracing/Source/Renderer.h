@@ -55,6 +55,8 @@ namespace RayTracing
         const Scene*  m_ActiveScene  = nullptr;
         const Camera* m_ActiveCamera = nullptr;
 
+        std::vector<uint32_t> m_ImageHorizontalIter, m_ImageVerticalIter;
+
         uint32_t m_FrameIndex = 1;
     };
 } // namespace RayTracing
