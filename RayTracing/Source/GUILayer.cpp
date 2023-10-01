@@ -50,7 +50,11 @@ namespace RayTracing
         }
     }
 
-    void GUILayer::OnUpdate(float ts) { m_Camera.OnUpdate(ts); }
+    void GUILayer::OnUpdate(float ts)
+    {
+        if (m_Camera.OnUpdate(ts))
+            m_Renderer.ResetFrameIndex();
+    }
 
     void GUILayer::OnImGuiRender()
     {
@@ -60,6 +64,11 @@ namespace RayTracing
         {
             Render();
         }
+
+        ImGui::Checkbox("Accumulate", &m_Renderer.GetSettings().Accumulate);
+
+        if (ImGui::Button("Reset"))
+            m_Renderer.ResetFrameIndex();
 
         ImGui::End();
 
